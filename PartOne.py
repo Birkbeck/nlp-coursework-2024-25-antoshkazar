@@ -3,12 +3,15 @@
 # Note: The template functions here and the dataframe format for structuring your solution is a suggested but not mandatory approach. You can use a different approach if you like, as long as you clearly answer the questions and communicate your answers clearly.
 
 import nltk
-import spacy
+# import spacy
+import pandas as pd
 from pathlib import Path
+from nltk.tokenize import word_tokenize
+import string
 
 
-nlp = spacy.load("en_core_web_sm")
-nlp.max_length = 2000000
+# nlp = spacy.load("en_core_web_sm")
+# nlp.max_length = 2000000
 
 
 
@@ -40,10 +43,33 @@ def count_syl(word, d):
     pass
 
 
-def read_novels(path=Path.cwd() / "texts" / "novels"):
+def read_novels(path=Path.cwd() / "p1-texts" / "novels"):
     """Reads texts from a directory of .txt files and returns a DataFrame with the text, title,
     author, and year"""
-    pass
+    novels_data = []
+    
+    for file_path in path.glob("*.txt"):
+        with open(file_path, 'r', encoding='utf-8') as file:
+            text = file.read()
+        
+        filename = file_path.stem
+        parts = filename.split('-')
+        
+        year = int(parts[-1])
+        author = parts[-2]
+        title = '-'.join(parts[:-2])
+        
+        novels_data.append({
+            'text': text,
+            'title': title,
+            'author': author,
+            'year': year
+        })
+    
+    df = pd.DataFrame(novels_data)
+    df = df.sort_values('year').reset_index(drop=True)
+    
+    return df
 
 
 def parse(df, store_path=Path.cwd() / "pickles", out_name="parsed.pickle"):
@@ -54,7 +80,12 @@ def parse(df, store_path=Path.cwd() / "pickles", out_name="parsed.pickle"):
 
 def nltk_ttr(text):
     """Calculates the type-token ratio of a text. Text is tokenized using nltk.word_tokenize."""
-    pass
+    tokens = word_tokenize(text)
+    tokens = [t.lower() for t in tokens if t.isalpha()]
+    if not tokens:
+        return 0
+    types = set(tokens)
+    return len(types) / len(tokens)
 
 
 def get_ttrs(df):
@@ -96,14 +127,13 @@ if __name__ == "__main__":
     """
     uncomment the following lines to run the functions once you have completed them
     """
-    #path = Path.cwd() / "p1-texts" / "novels"
-    #print(path)
-    #df = read_novels(path) # this line will fail until you have completed the read_novels function above.
-    #print(df.head())
-    #nltk.download("cmudict")
-    #parse(df)
-    #print(df.head())
-    #print(get_ttrs(df))
+    path = Path.cwd() / "p1-texts" / "novels"
+    print(path)
+    df = read_novels(path) # this line will fail until you have completed the read_novels function above.
+    nltk.download("cmudict")
+    parse(df)
+    print(df.head())
+    print(get_ttrs(df))
     #print(get_fks(df))
     #df = pd.read_pickle(Path.cwd() / "pickles" /"name.pickle")
     # print(adjective_counts(df))
