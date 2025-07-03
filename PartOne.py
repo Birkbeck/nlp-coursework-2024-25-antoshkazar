@@ -214,11 +214,7 @@ if __name__ == "__main__":
     print(get_ttrs(df))
     print(get_fks(df))
     df = pd.read_pickle(Path.cwd() / "pickles" /"parsed.pickle")
-    
-    for i, row in df.iterrows():
-        print(row["title"])
-        print(adjective_counts(row["parsed"]))
-        print("\n")
+    print(adjective_counts(df))
 
     for i, row in df.iterrows():
         print(row["title"])
