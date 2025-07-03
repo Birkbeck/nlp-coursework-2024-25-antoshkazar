@@ -28,6 +28,16 @@ def vectorize_and_split(df):
     return X_train, X_test, y_train, y_test, tfidf
 
 
+def vectorize_and_split_uningrams(df):
+    tfidf = TfidfVectorizer(stop_words='english', max_features=3000, ngram_range=(1, 3))
+    X = tfidf.fit_transform(df['speech'])
+    y = df['party']
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=26, stratify=y
+    )
+    return X_train, X_test, y_train, y_test, tfidf
+
+
 def train_and_evaluate(X_train, X_test, y_train, y_test):
     rf = RandomForestClassifier(n_estimators=300, random_state=26)
     svm = SVC(kernel='linear', random_state=26)
@@ -50,10 +60,19 @@ def train_and_evaluate(X_train, X_test, y_train, y_test):
 
 
 if __name__ == "__main__":
+    #Task 2A
     df = load_and_filter_data('p2-texts/hansard40000.csv')
     print(f"Dataset size after filtering: {df.shape}")
     print(f"Parties in dataset: {df['party'].value_counts().to_dict()}")
+    # Task 2B
     X_train, X_test, y_train, y_test, tfidf = vectorize_and_split(df)
+    print(f"Train set size: {X_train.shape}")
+    print(f"Test set size: {X_test.shape}")
+    # Task 2C
+    train_and_evaluate(X_train, X_test, y_train, y_test)
+    
+    # Task 2D
+    X_train, X_test, y_train, y_test, tfidf = vectorize_and_split_uningrams(df)
     print(f"Train set size: {X_train.shape}")
     print(f"Test set size: {X_test.shape}")
     train_and_evaluate(X_train, X_test, y_train, y_test)
