@@ -8,6 +8,8 @@ import pandas as pd
 from pathlib import Path
 from nltk.tokenize import word_tokenize
 import string
+from collections import Counter
+import math
 
 
 nlp = spacy.load("en_core_web_sm")
@@ -110,6 +112,8 @@ def read_novels(path=Path.cwd() / "p1-texts" / "novels"):
 
 
 def parse(df, store_path=Path.cwd() / "pickles", out_name="parsed.pickle"):
+    """Parses the text of a DataFrame using spaCy, stores the parsed docs as a column and writes 
+    the resulting  DataFrame to a pickle file"""
     store_path.mkdir(exist_ok=True)
     
     df['parsed'] = df['text'].apply(lambda x: nlp(x))
@@ -149,20 +153,52 @@ def get_fks(df):
 
 def subjects_by_verb_pmi(doc, target_verb):
     """Extracts the most common subjects of a given verb in a parsed document. Returns a list."""
-    pass
-
+    subjects = []
+    all_tokens = [token.text.lower() for token in doc if token.pos_ in ['NOUN', 'PROPN', 'PRON']]
+    verb_tokens = [token.text.lower() for token in doc if token.lemma_.lower() == target_verb.lower() and token.pos_ == 'VERB']
+    
+    for token in doc:
+        if token.lemma_.lower() == target_verb.lower() and token.pos_ == 'VERB':
+            for child in token.children:
+                if child.dep_ == 'nsubj':
+                    subjects.append(child.text.lower())
+    
+    if not subjects or not verb_tokens:
+        return []
+    
+    subject_counts = Counter(subjects)
+    verb_count = len(verb_tokens)
+    total_tokens = len(all_tokens)
+    
+    pmi_scores = []
+    for subject, count in subject_counts.items():
+        subject_freq = all_tokens.count(subject)
+        joint_freq = count
+        
+        if subject_freq > 0 and joint_freq > 0:
+            pmi = math.log((joint_freq * total_tokens) / (subject_freq * verb_count))
+            pmi_scores.append((subject, pmi))
+    
+    return sorted(pmi_scores, key=lambda x: x[1], reverse=True)[:10]
 
 
 def subjects_by_verb_count(doc, verb):
     """Extracts the most common subjects of a given verb in a parsed document. Returns a list."""
-    pass
-
+    subjects = []
+    
+    for token in doc:
+        if token.lemma_.lower() == verb.lower() and token.pos_ == 'VERB':
+            for child in token.children:
+                if child.dep_ == 'nsubj':
+                    subjects.append(child.text.lower())
+    
+    return Counter(subjects).most_common(10)
 
 
 def adjective_counts(doc):
     """Extracts the most common adjectives in a parsed document. Returns a list of tuples."""
-    pass
-
+    adjectives = [token.text.lower() for token in doc if token.pos_ == 'ADJ']
+    return Counter(adjectives).most_common(10)
 
 
 if __name__ == "__main__":
@@ -177,9 +213,13 @@ if __name__ == "__main__":
     print(df.head())
     print(get_ttrs(df))
     print(get_fks(df))
-    #df = pd.read_pickle(Path.cwd() / "pickles" /"name.pickle")
-    # print(adjective_counts(df))
-    """ 
+    df = pd.read_pickle(Path.cwd() / "pickles" /"parsed.pickle")
+    
+    for i, row in df.iterrows():
+        print(row["title"])
+        print(adjective_counts(row["parsed"]))
+        print("\n")
+
     for i, row in df.iterrows():
         print(row["title"])
         print(subjects_by_verb_count(row["parsed"], "hear"))
@@ -189,5 +229,4 @@ if __name__ == "__main__":
         print(row["title"])
         print(subjects_by_verb_pmi(row["parsed"], "hear"))
         print("\n")
-    """
 
