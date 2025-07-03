@@ -1,1 +1,15 @@
 Answers to the text questions go here.
+
+Part 1 Task D.
+Flesch Kincaid score is not the best estiator when:
+1. Creativity-related texts. Somitmes authors choose a specific set of techniques and styles to better express his thoughts. For example, let’s take James Joyce’s «stream of consciousness» style. It tends to appear almost tought-like: short sentences, simple words, easy language, so Flesch Kincaid may estimate this texts as easy, However, among humans it is considered one of the most hard-to-read styles due to its inconsistency and abstarctness
+ 2. Specialized texts. If the text is supposed to be read by an audience with a high level of expertise,  Flesch-Kincaid score might  not be an appropriate estimator. It may label such texts as difficult, when in reality this text’s target audience find it easy,
+
+Part 2 Task G.
+The custom_tokenizer function  does the following lowercase conversion, punctuation removal, whitespace normalization,length filtering, number filtering.
+Performance:
+Custom tokenizer generally was not better than default one:
+F1-score decreased from 0.78 to 0.75;
+Accuracy dropped from 0.83 to 0.82;
+Nevertheless, we still have quite good performance (F1 = 0.75) and less overfitting on ‘Conservative’ (precision 0.84 vs 0.85). the perfomance between classes generally is more balanced as well
+
