@@ -3,15 +3,15 @@
 # Note: The template functions here and the dataframe format for structuring your solution is a suggested but not mandatory approach. You can use a different approach if you like, as long as you clearly answer the questions and communicate your answers clearly.
 
 import nltk
-# import spacy
+import spacy
 import pandas as pd
 from pathlib import Path
 from nltk.tokenize import word_tokenize
 import string
 
 
-# nlp = spacy.load("en_core_web_sm")
-# nlp.max_length = 2000000
+nlp = spacy.load("en_core_web_sm")
+nlp.max_length = 2000000
 
 
 
@@ -26,7 +26,24 @@ def fk_level(text, d):
     Returns:
         float: The Flesch-Kincaid Grade Level of the text. (higher grade is more difficult)
     """
-    pass
+    tokens = word_tokenize(text)
+    words = [t.lower() for t in tokens if t.isalpha()]
+    
+    if not words:
+        return 0
+    
+    sentences = len([t for t in tokens if t in '.!?'])
+    if sentences == 0:
+        sentences = 1
+    
+    syllables = sum(count_syl(word, d) for word in words)
+    
+    avg_sentence_length = len(words) / sentences
+    avg_syllables_per_word = syllables / len(words)
+    
+    fk_score = 0.39 * avg_sentence_length + 11.8 * avg_syllables_per_word - 15.59
+    
+    return max(0, fk_score)
 
 
 def count_syl(word, d):
@@ -40,7 +57,27 @@ def count_syl(word, d):
     Returns:
         int: The number of syllables in the word.
     """
-    pass
+    word = word.lower()
+    if word in d:
+        pronunciations = d[word]
+        if pronunciations:
+            pronunciation = pronunciations[0]
+            return len([p for p in pronunciation if p[-1].isdigit()])
+    
+    vowels = 'aeiouy'
+    count = 0
+    prev_vowel = False
+    for char in word:
+        if char in vowels:
+            if not prev_vowel:
+                count += 1
+            prev_vowel = True
+        else:
+            prev_vowel = False
+    
+    if count == 0:
+        count = 1
+    return count
 
 
 def read_novels(path=Path.cwd() / "p1-texts" / "novels"):
@@ -73,9 +110,14 @@ def read_novels(path=Path.cwd() / "p1-texts" / "novels"):
 
 
 def parse(df, store_path=Path.cwd() / "pickles", out_name="parsed.pickle"):
-    """Parses the text of a DataFrame using spaCy, stores the parsed docs as a column and writes 
-    the resulting  DataFrame to a pickle file"""
-    pass
+    store_path.mkdir(exist_ok=True)
+    
+    df['parsed'] = df['text'].apply(lambda x: nlp(x))
+    
+    pickle_path = store_path / out_name
+    df.to_pickle(pickle_path)
+    
+    return df
 
 
 def nltk_ttr(text):
@@ -131,10 +173,10 @@ if __name__ == "__main__":
     print(path)
     df = read_novels(path) # this line will fail until you have completed the read_novels function above.
     nltk.download("cmudict")
-    parse(df)
+    df = parse(df)
     print(df.head())
     print(get_ttrs(df))
-    #print(get_fks(df))
+    print(get_fks(df))
     #df = pd.read_pickle(Path.cwd() / "pickles" /"name.pickle")
     # print(adjective_counts(df))
     """ 
